@@ -1,0 +1,125 @@
+type
+      TExplodeArray = array of string;
+      
+function Explode(const cSeparator, vString: string): TExplodeArray;
+var
+    i: Integer;
+    S: string;
+begin
+    S := vString;
+    SetLength(Result, 0);
+    i := 0;
+    while Pos(cSeparator, S) > 0 do begin
+        SetLength(Result, Length(Result) + 1);
+        Result[i] := Copy(S, 1, Pos(cSeparator, S) - 1);
+        Inc(i);
+        S := Copy(S, Pos(cSeparator, S) + Length(cSeparator), Length(S));
+    end;
+    SetLength(Result, Length(Result) + 1);
+    Result[i] := Copy(S, 1, Length(S));
+end;
+
+procedure convert_format(inputfile,outputfile:string);
+var
+  inp,ou:textfile;
+  s,tpline:string;
+  exp:texplodearray;
+  h,h_ct:thash;
+  ts:tstringlist;
+  i:integer;
+begin
+  h:=thash.Create;
+  h_ct:=thash.Create;
+  ts:=TStringList.Create;
+  AssignFile(inp,inputfile);
+  Reset(inp);
+  while not Eof(inp) do
+  begin
+    Readln(inp,s);
+    exp:=Explode(#9,s);
+    if h_ct.KeyExists(Exp[0]) then
+    begin
+      tpline:='';
+      tpline:=IntToStr(strtoint(h_ct.GetString(Exp[0]))+1);
+      h_ct.DeleteKey(Exp[0]);
+      h_ct.SetString(Exp[0],tpline);
+    end;
+    if h.KeyExists(Exp[0]) then
+    begin
+      tpline:='';
+      tpline:=h.GetString(Exp[0])+','+Exp[1];
+      h.DeleteKey(Exp[0]);
+      h.SetString(Exp[0],tpline);
+    end;
+    if not h_ct.KeyExists(Exp[0]) then
+    begin
+      h_ct.SetString(Exp[0],'1');
+    end;
+    if not h.KeyExists(Exp[0]) then
+    begin
+      h.SetString(Exp[0],Exp[1]);
+      ts.Add(Exp[0]);
+    end;
+  end;
+  CloseFile(inp);
+
+  AssignFile(ou,outputfile);
+  Rewrite(ou);
+  for i:=0 to ts.Count-1 do
+  begin
+    Writeln(ou,ts.Strings[i]+#9+h.getstring(ts.Strings[i])+#9+h_ct.getstring(ts.Strings[i]));
+  end;
+  CloseFile(ou);
+  h.Free;
+  h_ct.Free;
+  ts.Free;
+end;
+
+
+procedure contribute_index(inputalltarget,inputdrugtarget,outputfile:string;cutoff:double);
+var
+  inp,ou:textfile;
+  s:string;
+  ts,td:tstringlist;
+  totalcount:integer;
+  cp:double;
+  covercount:integer;
+  i,j:Integer;
+  h:THash;
+  Exp,eg:TExplodeArray;
+begin
+  ts:=TStringList.Create;
+  td:=tstringlist.Create;
+  td.LoadFromFile(inputdrugtarget);
+  ts.LoadFromFile(inputalltarget);
+  h:=THash.Create;
+  for i:=0 to ts.Count-1 do
+  begin
+    h.SetString(ts.Strings[i],ts.Strings[i]);
+  end;
+  totalcount:=0;
+  totalcount:=ts.count;
+  cp:=0;
+  covercount:=0;
+  AssignFile(ou,outputfile);
+  rewrite(ou);
+     for i:=0 to td.Count-1 do
+     begin
+       exp:=explode(#9,td.Strings[i]);
+       covercount:=covercount+strtoint(Exp[2]);
+       eg:=explode(',',Exp[1]);
+       for j:=0 to Length(eg)-1 do
+       begin
+         if h.KeyExists(eg[j]) then
+         h.DeleteKey(eg[j]);
+       end;
+       cp:=(totalcount-h.Count)/totalcount;
+       if cp<=cutoff then
+       Writeln(ou,td.strings[i]+#9+floattostr(cp));
+       if cp>cutoff then Continue;
+     end;
+  CloseFile(ou);
+  td.Free;
+  ts.Free;
+  h.Free;
+end;
